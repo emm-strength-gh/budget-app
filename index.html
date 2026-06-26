@@ -328,12 +328,44 @@
   }
   @media (max-width:560px){
     .wrap{padding:0 15px}
-    .bar{height:60px;gap:10px}
+    header.app{position:sticky}
+    .bar{
+      height:auto;
+      min-height:60px;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:stretch;
+      padding-top:10px;
+      padding-bottom:10px;
+    }
+    .brand{
+      flex:1 0 100%;
+      margin-right:0;
+      min-width:0;
+    }
+    .brand h1{font-size:19px}
     .brand .tag{display:none}
-    .btn{padding:0 11px}
+    .actions{
+      width:100%;
+      flex:1 0 100%;
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:7px;
+    }
+    .btn,.cur{
+      width:100%;
+      height:38px;
+      justify-content:center;
+      min-width:0;
+      padding-left:8px;
+      padding-right:8px;
+      font-size:12.5px;
+    }
+    .btn svg{width:15px;height:15px}
     .btn .lbl{display:none}
     .btn .lbl-sm{display:inline}
-    .cur{padding:0 28px 0 10px}
+    .cur{padding:0 22px 0 8px;background-position:right 7px center}
+    main{padding-top:18px}
     .summary{padding:22px 20px}
     .stat-row{gap:18px}
     .alloc{padding:20px 18px 24px}
@@ -341,6 +373,11 @@
     .ledger-bar{flex-wrap:wrap}
     .search input{width:100%}
     .search{flex:1 1 100%;order:3}
+  }
+  @media (max-width:390px){
+    .actions{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .cur{grid-column:span 1}
+    #saveBtn{grid-column:span 2}
   }
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important}
@@ -544,7 +581,7 @@
           <button data-t="savings"><span class="sw" style="background:var(--savings)"></span>Savings</button>
           <button data-t="others"><span class="sw" style="background:var(--others)"></span>Others</button>
         </div>
-        <button class="transfer-btn" id="transferPHBtn" type="button">
+        <button class="transfer-btn" id="transferPotBtn" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3"/><path d="M17 17H6l3 3"/><path d="M18 7 6 19"/></svg>Transfer to New Pot</button>
       </div>
 
@@ -639,7 +676,7 @@
   /* ---------------- State ---------------- */
   var entries = [];        // main ledger entries: {id, date, description, category, type, amount, transferId?}
   var subLedgers = {};     // transferId -> {parentId, entries}
-  var currentLedgerId = null; // null = main ledger; transfer id = PH sub-ledger
+  var currentLedgerId = null; // null = main ledger; transfer id = New Pot sub-ledger
   var undoStack = [];
   var currency = "£";
   var activeType = "needs";
@@ -741,7 +778,7 @@
   function currentLedgerName(){
     if(!currentLedgerId) return "Ledger";
     var parent = entries.filter(function(e){ return e.id === currentLedgerId; })[0];
-    return "PH sub-ledger" + (parent ? " · " + fmt(Math.abs(parent.amount)) : "");
+    return "New Pot sub-ledger" + (parent ? " · " + fmt(Math.abs(parent.amount)) : "");
   }
 
   function fmt(n){
@@ -919,7 +956,7 @@
       var isIn = e.amount >= 0;
       html += '<tr class="'+(e.transferId ? 'transfer-row' : '')+'" '+(e.transferId ? 'data-transfer-id="'+e.transferId+'"' : '')+'>'
         + '<td class="date">'+niceDate(e.date)+'</td>'
-        + '<td class="desc">'+esc(e.description||"—") + (e.transferId ? '<span class="open-note">Click to open PH sub-ledger</span>' : '')
+        + '<td class="desc">'+esc(e.description||"—") + (e.transferId ? '<span class="open-note">Click to open New Pot sub-ledger</span>' : '')
           + (e.category ? '<div style="font-weight:500;color:var(--faint);font-size:12px;margin-top:1px">'+esc(e.category)+'</div>' : '')
         + '</td>'
         + '<td><span class="pill '+e.type+'"><span class="sw" style="background:'+ty.color+'"></span>'+ty.label+'</span></td>'
@@ -1169,7 +1206,7 @@
     if($("backMainBtn")) $("backMainBtn").hidden = !inSub;
     if($("ledgerTitle")) $("ledgerTitle").textContent = currentLedgerName();
     var sub = document.querySelector(".add-card .sub");
-    if(sub) sub.textContent = inSub ? "Log PH income or where the transferred money went." : "Log income or where money went.";
+    if(sub) sub.textContent = inSub ? "Log pot income or where the transferred money went." : "Log income or where money went.";
   }
 
   function clearEntryForm(){
@@ -1179,14 +1216,14 @@
     if($("fDate")) $("fDate").value = todayISO();
   }
   function openSubLedger(id){
-    if(!id || !subLedgers[id]){ toast("That PH sub-ledger no longer exists", true); return; }
+    if(!id || !subLedgers[id]){ toast("That New Pot sub-ledger no longer exists", true); return; }
     currentLedgerId = id;
     search = "";
     if($("searchInput")) $("searchInput").value = "";
     clearEntryForm();
     sort = { key:"date", dir:-1 };
     renderAll();
-    toast("Opened PH sub-ledger");
+    toast("Opened New Pot sub-ledger");
   }
   function backToMainLedger(){
     currentLedgerId = null;
@@ -1218,19 +1255,21 @@
     toast("Added "+TYPES[activeType].label.toLowerCase()+": "+(signed<0?"\u2212":"+")+fmt(mag));
   }
 
-  function addTransferToPH(){
-    if(currentLedgerId){ toast("Go back to the main ledger to create a PH transfer", true); return; }
+  function addTransferToNewPot(){
+    if(currentLedgerId){ toast("Go back to the main ledger to create a New Pot transfer", true); return; }
+    var desc = $("fDesc").value.trim() || "Transfer to New Pot";
+    var cat = $("fCat").value.trim() || "Transfer to New Pot";
     var amt = parseFloat($("fAmt").value);
     var date = $("fDate").value || todayISO();
     if(!isFinite(amt) || amt <= 0){ toast("Enter the transfer amount first", true); $("fAmt").focus(); return; }
     pushUndo();
     var mag = Math.round(amt*100)/100;
     var id = uid();
-    entries.push({ id:id, transferId:id, date:date, description:"sent cash to PH", category:"Transfer to PH", type:"others", amount:-mag });
-    subLedgers[id] = { parentId:id, entries:[{ id:uid(), date:date, description:"Transfer from main ledger", category:"Transfer to PH", type:"income", amount:mag }] };
+    entries.push({ id:id, transferId:id, date:date, description:desc, category:cat, type:"others", amount:-mag });
+    subLedgers[id] = { parentId:id, entries:[{ id:uid(), date:date, description:desc, category:cat, type:"income", amount:mag }] };
     $("fDesc").value = ""; $("fCat").value = ""; $("fAmt").value = "";
     renderAll();
-    toast("Added Transfer to PH: −"+fmt(mag));
+    toast("Added New Pot transfer: −"+fmt(mag));
   }
 
   function deleteEntry(id){
@@ -1245,7 +1284,7 @@
       if(currentLedgerId === removed.transferId) currentLedgerId = null;
     }
     renderAll();
-    toast(removed && removed.transferId ? "Deleted PH transfer and its sub-ledger" : "Deleted entry");
+    toast(removed && removed.transferId ? "Deleted New Pot transfer and its sub-ledger" : "Deleted entry");
   }
 
   /* ---------------- CSV export ---------------- */
@@ -1254,8 +1293,9 @@
     if(/[",\n\r]/.test(v)){ return '"' + v.replace(/"/g,'""') + '"'; }
     return v;
   }
-  function exportCSV(){
+  async function exportCSV(){
     if(activeEntries().length === 0 && categories.length === 0){ toast("Nothing to save yet", true); return; }
+    var entryCount = activeEntries().length;
     var header = ["Date","Description","Category","Type","Amount"];
     var lines = [
       "#format=signed",
@@ -1267,14 +1307,38 @@
       lines.push([ csvCell(e.date), csvCell(e.description), csvCell(e.category),
         csvCell(TYPES[e.type]?TYPES[e.type].label:e.type), csvCell(e.amount) ].join(","));
     });
+    var filename = "emm-budget-" + todayISO() + ".csv";
     var blob = new Blob([ lines.join("\r\n") ], { type:"text/csv;charset=utf-8;" });
+
+    // Prefer the File System Access API so the user can choose the save location.
+    // Browsers that do not support it will fall back to the standard download flow.
+    if(window.showSaveFilePicker){
+      try {
+        var handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{
+            description: "CSV file",
+            accept: { "text/csv": [".csv"] }
+          }]
+        });
+        var writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        toast(entryCount > 0 ? "Saved "+entryCount+" entries to CSV" : "Saved your category list to CSV");
+        return;
+      } catch(err){
+        if(err && err.name === "AbortError"){ toast("Save cancelled", true); return; }
+        console.warn("File picker save failed; falling back to download", err);
+      }
+    }
+
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
-    a.download = "emm-budget-" + todayISO() + ".csv";
+    a.download = filename;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 500);
-    toast(activeEntries().length > 0 ? "Saved "+activeEntries().length+" entries to CSV" : "Saved your category list to CSV");
+    toast(entryCount > 0 ? "Downloaded "+entryCount+" entries to CSV" : "Downloaded your category list to CSV");
   }
 
   /* ---------------- CSV import ---------------- */
@@ -1490,7 +1554,7 @@
     });
 
     $("addBtn").addEventListener("click", addEntry);
-    $("transferPHBtn").addEventListener("click", addTransferToPH);
+    $("transferPotBtn").addEventListener("click", addTransferToNewPot);
     $("undoBtn").addEventListener("click", undoLast);
     $("backMainBtn").addEventListener("click", backToMainLedger);
     // enter-to-add from amount field
