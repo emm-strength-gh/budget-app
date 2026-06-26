@@ -72,6 +72,17 @@
   .brand .tag{font-size:11.5px;color:var(--muted);font-weight:500;margin-top:2px}
   .brand .col{min-width:0}
   .actions{display:flex;align-items:center;gap:9px;flex:none}
+  .fname-wrap{
+    display:inline-flex;align-items:center;height:40px;order:1;flex:0 1 170px;min-width:0;
+    border:1px solid var(--border-strong);background:var(--surface);border-radius:10px;padding:0 11px;gap:1px;
+  }
+  .fname-wrap input{
+    border:none;background:none;font:inherit;font-weight:600;font-size:14px;color:var(--ink-soft);
+    min-width:0;width:100%;outline:none;
+  }
+  .fname-wrap input::placeholder{color:var(--faint);font-weight:500}
+  .fname-wrap .ext{color:var(--faint);font-weight:600;font-size:14px;flex:none}
+  #saveBtn{order:2}
   .cur{
     appearance:none;border:1px solid var(--border-strong);background:var(--surface);
     border-radius:10px;height:40px;padding:0 30px 0 12px;font:inherit;font-weight:600;
@@ -165,39 +176,36 @@
   }
 
   /* ---------- Charts ---------- */
-  .insights-tools{
-    display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:-4px 0 13px;
-    color:var(--muted);font-size:12.5px;font-weight:600;
-  }
-  .zoom-controls{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;box-shadow:var(--shadow)}
-  .zoom-controls button{
-    border:none;background:none;color:var(--ink-soft);font:inherit;font-size:12.5px;font-weight:700;
-    min-width:32px;height:28px;padding:0 9px;border-radius:7px;cursor:pointer;transition:.15s;
-  }
-  .zoom-controls button:hover{background:var(--surface-2)}
-  .zoom-controls button:active{transform:translateY(1px)}
-  .zoom-controls button:disabled{opacity:.42;cursor:not-allowed}
-  .zoom-controls .zoom-label{min-width:54px;color:var(--muted)}
-  .charts{
-    --chart-h:260px;--chart-h-tall:300px;
-    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-bottom:26px;width:100%;min-width:0;
-  }
-  .charts.zoom-compact{--chart-h:220px;--chart-h-tall:250px}
-  .charts.zoom-large{--chart-h:330px;--chart-h-tall:380px}
-  .charts.zoom-xl{--chart-h:420px;--chart-h-tall:480px}
-  .chart-card{padding:22px 24px 18px;min-width:0;overflow:hidden}
+  .charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:26px}
+  .chart-card{padding:22px 24px 18px;min-width:0}
   .chart-card.wide{grid-column:1 / -1}
-  .chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;min-width:0}
-  .chart-head h3{font-size:14.5px;font-weight:700;letter-spacing:-.01em;min-width:0}
-  .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px;flex:none}
+  .chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+  .chart-head h3{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+  .head-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px}
   .seg button{
     border:none;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);
     padding:5px 11px;border-radius:6px;cursor:pointer;transition:.15s;
   }
   .seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(20,30,45,.1)}
-  .canvas-box{position:relative;height:var(--chart-h);width:100%;min-width:0}
-  .canvas-box.tall{height:var(--chart-h-tall)}
-  .canvas-box canvas{display:block;width:100%!important;max-width:100%;height:100%!important}
+
+  /* zoom controls (outside the graph) */
+  .zoom{display:inline-flex;align-items:center;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px}
+  .zoom .zbtn{
+    border:none;background:none;font:inherit;font-weight:700;color:var(--muted);
+    border-radius:6px;cursor:pointer;transition:.15s;display:grid;place-items:center;
+  }
+  .zoom .zstep{width:26px;height:26px;font-size:16px;line-height:1}
+  .zoom .zreset{min-width:42px;height:26px;font-size:11.5px;font-weight:700;letter-spacing:.01em;padding:0 6px}
+  .zoom .zbtn:hover:not(:disabled){background:var(--surface);color:var(--ink)}
+  .zoom .zbtn:disabled{opacity:.35;cursor:default}
+
+  /* scroll wrapper lets a zoomed-in chart pan horizontally without widening the card */
+  .canvas-scroll{position:relative;width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  .canvas-scroll::-webkit-scrollbar{height:7px}
+  .canvas-scroll::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:7px}
+  .canvas-box{position:relative;height:260px;width:100%}
+  .canvas-box.tall{height:300px}
   .chart-empty{
     position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     color:var(--faint);font-size:13.5px;text-align:center;gap:6px;
@@ -343,10 +351,7 @@
   /* ---------- Responsive ---------- */
   @media (max-width:920px){
     .hero{grid-template-columns:1fr}
-    .charts{grid-template-columns:minmax(0,1fr);--chart-h:240px;--chart-h-tall:270px}
-    .charts.zoom-compact{--chart-h:200px;--chart-h-tall:230px}
-    .charts.zoom-large{--chart-h:310px;--chart-h-tall:350px}
-    .charts.zoom-xl{--chart-h:390px;--chart-h-tall:430px}
+    .charts{grid-template-columns:minmax(0,1fr)}
     .ledger-grid{grid-template-columns:1fr}
   }
   @media (max-width:560px){
@@ -388,15 +393,13 @@
     .btn .lbl{display:none}
     .btn .lbl-sm{display:inline}
     .cur{padding:0 22px 0 8px;background-position:right 7px center}
+    .fname-wrap{order:0;grid-column:1 / -1;width:100%;height:38px;flex:none}
+    #saveBtn{order:0}
     main{padding-top:18px}
     .summary{padding:22px 20px}
     .stat-row{gap:18px}
     .alloc{padding:20px 18px 24px}
-    .insights-tools{justify-content:space-between;margin-top:-2px}
-    .chart-card{padding:18px 14px 14px}
-    .chart-head{align-items:flex-start;flex-direction:column;gap:10px}
-    .seg{width:100%}
-    .seg button{flex:1;padding-left:7px;padding-right:7px}
+    .chart-card{padding:18px 16px 14px}
     .ledger-bar{flex-wrap:wrap}
     .search input{width:100%}
     .search{flex:1 1 100%;order:3}
@@ -445,6 +448,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
         <span class="lbl">Save File</span><span class="lbl-sm">Save</span>
       </button>
+      <label class="fname-wrap" title="File name used when you save">
+        <input id="fnameInput" type="text" autocomplete="off" spellcheck="false" aria-label="File name for saving" placeholder="emm-budget" />
+        <span class="ext">.csv</span>
+      </label>
       <input type="file" id="fileInput" accept=".csv,text/csv" hidden />
       <input type="file" id="monzoInput" accept=".csv,text/csv" hidden />
     </div>
@@ -550,50 +557,73 @@
 
   <!-- CHARTS -->
   <div class="section-eyebrow">Insights</div>
-  <div class="insights-tools" aria-label="Graph size controls">
-    <span>Graph size</span>
-    <div class="zoom-controls">
-      <button id="chartZoomOut" type="button" aria-label="Zoom graphs out">−</button>
-      <button id="chartZoomReset" type="button" class="zoom-label" aria-label="Reset graph size">100%</button>
-      <button id="chartZoomIn" type="button" aria-label="Zoom graphs in">+</button>
-    </div>
-  </div>
-  <section class="charts" id="chartsSection">
+  <section class="charts">
     <div class="card chart-card wide">
       <div class="chart-head">
         <h3>Cash flow over time</h3>
-        <div class="seg" id="flowSeg">
-          <button data-mode="monthly" class="on">Monthly</button>
-          <button data-mode="cumulative">Running balance</button>
+        <div class="head-tools">
+          <div class="seg" id="flowSeg">
+            <button data-mode="monthly" class="on">Monthly</button>
+            <button data-mode="cumulative">Running balance</button>
+          </div>
+          <div class="zoom" data-target="flowChart">
+            <button class="zbtn zstep" data-z="out" aria-label="Zoom out" title="Zoom out">&minus;</button>
+            <button class="zbtn zreset" data-z="reset" aria-label="Reset zoom" title="Reset zoom">100%</button>
+            <button class="zbtn zstep" data-z="in" aria-label="Zoom in" title="Zoom in">+</button>
+          </div>
         </div>
       </div>
-      <div class="canvas-box tall">
-        <canvas id="flowChart"></canvas>
-        <div class="chart-empty" id="flowEmpty" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 13l3-3 3 2 5-6"/></svg>
-          No dated entries yet
+      <div class="canvas-scroll">
+        <div class="canvas-box tall">
+          <canvas id="flowChart"></canvas>
+          <div class="chart-empty" id="flowEmpty" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 13l3-3 3 2 5-6"/></svg>
+            No dated entries yet
+          </div>
         </div>
       </div>
     </div>
 
     <div class="card chart-card">
-      <div class="chart-head"><h3>Spending split</h3></div>
-      <div class="canvas-box">
-        <canvas id="donutChart"></canvas>
-        <div class="chart-empty" id="donutEmpty" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/></svg>
-          No spending logged yet
+      <div class="chart-head">
+        <h3>Spending split</h3>
+        <div class="head-tools">
+          <div class="zoom" data-target="donutChart">
+            <button class="zbtn zstep" data-z="out" aria-label="Zoom out" title="Zoom out">&minus;</button>
+            <button class="zbtn zreset" data-z="reset" aria-label="Reset zoom" title="Reset zoom">100%</button>
+            <button class="zbtn zstep" data-z="in" aria-label="Zoom in" title="Zoom in">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="canvas-scroll">
+        <div class="canvas-box">
+          <canvas id="donutChart"></canvas>
+          <div class="chart-empty" id="donutEmpty" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/></svg>
+            No spending logged yet
+          </div>
         </div>
       </div>
     </div>
 
     <div class="card chart-card">
-      <div class="chart-head"><h3>Top categories</h3></div>
-      <div class="canvas-box">
-        <canvas id="catChart"></canvas>
-        <div class="chart-empty" id="catEmpty" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
-          No categories to rank yet
+      <div class="chart-head">
+        <h3>Top categories</h3>
+        <div class="head-tools">
+          <div class="zoom" data-target="catChart">
+            <button class="zbtn zstep" data-z="out" aria-label="Zoom out" title="Zoom out">&minus;</button>
+            <button class="zbtn zreset" data-z="reset" aria-label="Reset zoom" title="Reset zoom">100%</button>
+            <button class="zbtn zstep" data-z="in" aria-label="Zoom in" title="Zoom in">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="canvas-scroll">
+        <div class="canvas-box">
+          <canvas id="catChart"></canvas>
+          <div class="chart-empty" id="catEmpty" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+            No categories to rank yet
+          </div>
         </div>
       </div>
     </div>
@@ -718,10 +748,11 @@
   var sort = { key:"date", dir:-1 };  // dir 1 asc, -1 desc
   var search = "";
   var flowMode = "monthly";
-  var chartZoom = 1; // 0 compact, 1 normal, 2 large, 3 extra large
-  var chartZoomLabels = ["Compact","100%","Large","XL"];
-  var chartZoomClasses = ["zoom-compact","","zoom-large","zoom-xl"];
   var charts = { flow:null, donut:null, cat:null };
+
+  /* Insights zoom: index into ZOOM_STEPS per chart. 0 = fit (100%). */
+  var ZOOM_STEPS = [1, 1.35, 1.75, 2.2];
+  var zoomState = { flowChart:0, donutChart:0, catChart:0 };
 
   var DEFAULT_CATEGORIES = ["Housing","Food","Bills","Transport","Health","Dining","Leisure","Shopping","Subscriptions","Savings","Emergency Fund","Investments"];
   var categories = DEFAULT_CATEGORIES.slice();
@@ -781,6 +812,18 @@
     if(currentLedgerId && subLedgers[currentLedgerId]) subLedgers[currentLedgerId].entries = list;
     else entries = list;
   }
+  // Currency is per-ledger: the main ledger uses `currency`, each sub-ledger
+  // can carry its own. Display + the selector follow whichever ledger is open.
+  function activeCurrency(){
+    if(currentLedgerId && subLedgers[currentLedgerId] && subLedgers[currentLedgerId].currency){
+      return subLedgers[currentLedgerId].currency;
+    }
+    return currency;
+  }
+  function setActiveCurrency(cur){
+    if(currentLedgerId && subLedgers[currentLedgerId]) subLedgers[currentLedgerId].currency = cur;
+    else currency = cur;
+  }
   function cloneState(){
     return JSON.stringify({ entries:entries, subLedgers:subLedgers, currentLedgerId:currentLedgerId, currency:currency, categories:categories, activeType:activeType });
   }
@@ -813,23 +856,40 @@
     b.disabled = undoStack.length === 0;
     b.style.opacity = undoStack.length === 0 ? ".55" : "1";
   }
+  function potKeyForName(name){
+    var n = String(name||"").trim().toLowerCase();
+    if(!n) return null;
+    var keys = Object.keys(subLedgers);
+    for(var i=0;i<keys.length;i++){
+      var sl = subLedgers[keys[i]];
+      if(sl && sl.name && sl.name.trim().toLowerCase() === n) return keys[i];
+    }
+    return null;
+  }
   function currentLedgerName(){
     if(!currentLedgerId) return "Ledger";
-    var parent = entries.filter(function(e){ return e.id === currentLedgerId; })[0];
-    return "New Pot sub-ledger" + (parent ? " · " + fmt(Math.abs(parent.amount)) : "");
+    var sl = subLedgers[currentLedgerId];
+    var name = (sl && sl.name) ? sl.name : null;
+    if(!name){
+      var parent = entries.filter(function(e){ return e.id === currentLedgerId; })[0];
+      name = parent ? parent.description : null;
+    }
+    return name || "New Pot sub-ledger";
   }
 
   function fmt(n){
+    var cur = activeCurrency();
     var neg = n < 0;
     var v = Math.abs(n);
     var s = v.toLocaleString(undefined,{ minimumFractionDigits: (v % 1 === 0 ? 0 : 2), maximumFractionDigits:2 });
-    return (neg ? "-" : "") + currency + s;
+    return (neg ? "-" : "") + cur + s;
   }
   function fmtShort(n){
+    var cur = activeCurrency();
     var v = Math.abs(n);
-    if(v >= 1000000) return currency + (v/1000000).toFixed(1).replace(/\.0$/,"") + "M";
-    if(v >= 1000) return currency + (v/1000).toFixed(1).replace(/\.0$/,"") + "k";
-    return currency + Math.round(v);
+    if(v >= 1000000) return cur + (v/1000000).toFixed(1).replace(/\.0$/,"") + "M";
+    if(v >= 1000) return cur + (v/1000).toFixed(1).replace(/\.0$/,"") + "k";
+    return cur + Math.round(v);
   }
   function todayISO(){
     var d = new Date(), p = function(x){ return String(x).padStart(2,"0"); };
@@ -1096,22 +1156,6 @@
     renderCat();
   }
 
-  function applyChartZoom(){
-    var sec = $("chartsSection");
-    if(!sec) return;
-    chartZoomClasses.forEach(function(c){ if(c) sec.classList.remove(c); });
-    var cls = chartZoomClasses[chartZoom];
-    if(cls) sec.classList.add(cls);
-    var lab = $("chartZoomReset");
-    if(lab) lab.textContent = chartZoomLabels[chartZoom];
-    var out = $("chartZoomOut"), inn = $("chartZoomIn");
-    if(out) out.disabled = chartZoom <= 0;
-    if(inn) inn.disabled = chartZoom >= chartZoomClasses.length - 1;
-    setTimeout(function(){
-      Object.keys(charts).forEach(function(k){ if(charts[k]) charts[k].resize(); });
-    }, 40);
-  }
-
   function renderFlow(){
     var dated = activeEntries().filter(function(e){ return monthKey(e.date); });
     var empty = $("flowEmpty"), box = $("flowChart");
@@ -1244,6 +1288,29 @@
     charts.cat = new Chart(box.getContext("2d"), { type:"bar", data:data, options:opts });
   }
 
+  /* Resize the chart's container; Chart.js (responsive) reflows to fill it.
+     Zooming past 100% widens the box inside its scroll wrapper, so it pans
+     horizontally instead of stretching the Insights section. */
+  function chartFor(id){ return id==="flowChart"?charts.flow:(id==="donutChart"?charts.donut:charts.cat); }
+  function applyZoom(id){
+    var canvas = $(id); if(!canvas) return;
+    var box = canvas.parentElement;                 // .canvas-box
+    var z = ZOOM_STEPS[zoomState[id]] || 1;
+    var base = box.classList.contains("tall") ? 300 : 260;
+    box.style.width = (z*100) + "%";
+    box.style.height = Math.round(base*z) + "px";
+    var ctrl = document.querySelector('.zoom[data-target="'+id+'"]');
+    if(ctrl){
+      var lbl = ctrl.querySelector(".zreset");
+      if(lbl) lbl.textContent = Math.round(z*100) + "%";
+      var outB = ctrl.querySelector('[data-z="out"]'), inB = ctrl.querySelector('[data-z="in"]');
+      if(outB) outB.disabled = (zoomState[id] === 0);
+      if(inB)  inB.disabled  = (zoomState[id] === ZOOM_STEPS.length-1);
+    }
+    var c = chartFor(id);
+    if(c && typeof c.resize === "function") c.resize();
+  }
+
   /* ---------------- Render all ---------------- */
   function renderAll(){
     renderSummary();
@@ -1261,6 +1328,35 @@
     if($("ledgerTitle")) $("ledgerTitle").textContent = currentLedgerName();
     var sub = document.querySelector(".add-card .sub");
     if(sub) sub.textContent = inSub ? "Log pot income or where the transferred money went." : "Log income or where money went.";
+
+    // Currency selector reflects the ledger you're viewing (main or this pot).
+    var cs = $("curSel");
+    if(cs){
+      var ac = activeCurrency();
+      if(cs.value !== ac){
+        var has = Array.prototype.some.call(cs.options, function(o){ return o.value === ac; });
+        if(has) cs.value = ac;
+      }
+    }
+
+    // Header Open button doubles as a Back button while viewing a sub-ledger.
+    var ob = $("openBtn");
+    if(ob){
+      var lbl = ob.querySelector(".lbl"), lblSm = ob.querySelector(".lbl-sm"), svg = ob.querySelector("svg");
+      if(inSub){
+        ob.classList.add("is-back");
+        ob.title = "Back to the main ledger";
+        if(lbl) lbl.textContent = "Back";
+        if(lblSm) lblSm.textContent = "Back";
+        if(svg) svg.innerHTML = '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>';
+      } else {
+        ob.classList.remove("is-back");
+        ob.title = "Open a CSV file";
+        if(lbl) lbl.textContent = "Open";
+        if(lblSm) lblSm.textContent = "Open";
+        if(svg) svg.innerHTML = '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>';
+      }
+    }
   }
 
   function clearEntryForm(){
@@ -1319,11 +1415,21 @@
     pushUndo();
     var mag = Math.round(amt*100)/100;
     var id = uid();
-    entries.push({ id:id, transferId:id, date:date, description:desc, category:cat, type:"others", amount:-mag });
-    subLedgers[id] = { parentId:id, entries:[{ id:uid(), date:date, description:desc, category:cat, type:"income", amount:mag }] };
+    // Pots are identified by name: a transfer to an existing Pot Name joins that
+    // same sub-ledger, so every transfer with that name opens the same pot.
+    var deposit = { id:uid(), date:date, description:desc, category:cat, type:"income", amount:mag };
+    var key = potKeyForName(desc);
+    if(key && subLedgers[key]){
+      subLedgers[key].entries.push(deposit);
+      toast("Added to \u201C"+desc+"\u201D pot: \u2212"+fmt(mag));
+    } else {
+      key = id;
+      subLedgers[key] = { name:desc, currency:currency, entries:[deposit] };
+      toast("Added New Pot transfer: \u2212"+fmt(mag));
+    }
+    entries.push({ id:id, transferId:key, date:date, description:desc, category:cat, type:"others", amount:-mag });
     $("fDesc").value = ""; $("fCat").value = ""; $("fAmt").value = "";
     renderAll();
-    toast("Added New Pot transfer: −"+fmt(mag));
   }
 
   function deleteEntry(id){
@@ -1333,12 +1439,33 @@
     if(idx < 0) return;
     pushUndo();
     var removed = list.splice(idx,1)[0];
+    var sharedPot = false;
     if(!currentLedgerId && removed.transferId){
-      delete subLedgers[removed.transferId];
-      if(currentLedgerId === removed.transferId) currentLedgerId = null;
+      var stillUsed = entries.some(function(e){ return e.transferId === removed.transferId; });
+      if(stillUsed){
+        // Another transfer still feeds this pot — keep the sub-ledger, and just
+        // remove this deposit's matching mirror income (best effort).
+        sharedPot = true;
+        var sl = subLedgers[removed.transferId];
+        if(sl && sl.entries){
+          var mag = Math.abs(removed.amount);
+          for(var k=0;k<sl.entries.length;k++){
+            var se = sl.entries[k];
+            if(se.type === "income" && Math.abs(se.amount - mag) < 0.005 &&
+               (se.description||"").trim().toLowerCase() === (removed.description||"").trim().toLowerCase()){
+              sl.entries.splice(k,1); break;
+            }
+          }
+        }
+      } else {
+        delete subLedgers[removed.transferId];
+        if(currentLedgerId === removed.transferId) currentLedgerId = null;
+      }
     }
     renderAll();
-    toast(removed && removed.transferId ? "Deleted New Pot transfer and its sub-ledger" : "Deleted entry");
+    toast(removed && removed.transferId
+      ? (sharedPot ? "Deleted transfer (shared pot kept)" : "Deleted New Pot transfer and its sub-ledger")
+      : "Deleted entry");
   }
 
   /* ---------------- CSV export ---------------- */
@@ -1347,84 +1474,165 @@
     if(/[",\n\r]/.test(v)){ return '"' + v.replace(/"/g,'""') + '"'; }
     return v;
   }
+  function defaultFileBase(){ return "emm-budget-" + todayISO(); }
+  // Turn whatever's typed into a safe file base name (no extension).
+  function sanitizeFilename(name){
+    name = String(name == null ? "" : name).trim();
+    name = name.replace(/\.csv$/i, "");                       // don't double the extension
+    name = name.replace(/[\/\\:*?"<>|\u0000-\u001F]/g, "-");   // strip illegal path chars
+    name = name.replace(/\s+/g, " ").replace(/^[.\s]+/, "").trim();
+    if(name.length > 100) name = name.slice(0,100).trim();
+    return name;
+  }
   async function exportCSV(){
-    if(activeEntries().length === 0 && categories.length === 0){ toast("Nothing to export yet", true); return; }
-    var entryCount = activeEntries().length;
+    if(entries.length === 0 && categories.length === 0){ toast("Nothing to export yet", true); return; }
     var header = ["Date","Description","Category","Type","Amount"];
+
     var lines = [
       "#format=signed",
       "#currency=" + currency,
       "#categories=" + categories.map(encodeURIComponent).join("|"),
       header.join(",")
     ];
-    sortedEntries().slice().reverse().forEach(function(e){
+
+    // Human-readable main ledger rows (newest first).
+    entries.slice().sort(function(a,b){ return a.date<b.date?1:(a.date>b.date?-1:0); }).forEach(function(e){
       lines.push([ csvCell(e.date), csvCell(e.description), csvCell(e.category),
         csvCell(TYPES[e.type]?TYPES[e.type].label:e.type), csvCell(e.amount) ].join(","));
     });
 
-    var filename = "emm-budget-" + todayISO() + ".csv";
-    var csvText = lines.join("\r\n");
-    var blob = new Blob([ csvText ], { type:"text/csv;charset=utf-8;" });
-    var file = null;
-
-    try {
-      file = new File([blob], filename, { type:"text/csv" });
-    } catch(e) {
-      file = null;
-    }
-
-    // Mobile-first export: iPhone/iPad and many Android browsers expose the
-    // native share/export sheet for files. On iPhone this lets the user choose
-    // Save to Files. On Android it can save/share the CSV to Downloads or apps.
-    if(file && navigator.share && navigator.canShare && navigator.canShare({ files:[file] })){
-      try {
-        await navigator.share({
-          files:[file],
-          title:"Emm Budget CSV",
-          text:"Export Emm Budget CSV"
+    // Sub-ledgers as a second, readable table below the main ledger. Each row is
+    // tagged with its Pot (by name); transfers that share a Pot Name share one
+    // sub-ledger, so each pot is written once here.
+    var seenPot = {}, potOrder = [];
+    entries.forEach(function(e){
+      var sl = e.transferId && subLedgers[e.transferId];
+      if(sl && sl.entries && sl.entries.length && !seenPot[e.transferId]){ seenPot[e.transferId] = 1; potOrder.push(e.transferId); }
+    });
+    if(potOrder.length){
+      lines.push("");                              // blank separator row
+      lines.push(csvCell("New Pot sub-ledgers"));  // section title
+      lines.push(["Pot","Currency","Date","Description","Category","Type","Amount"].join(","));
+      potOrder.forEach(function(key){
+        var sl = subLedgers[key];
+        var potName = sl.name || ((entries.filter(function(e){ return e.transferId === key; })[0]||{}).description) || "New Pot";
+        var potCur = sl.currency || currency;
+        sl.entries.forEach(function(e){
+          lines.push([ csvCell(potName), csvCell(potCur), csvCell(e.date), csvCell(e.description), csvCell(e.category),
+            csvCell(TYPES[e.type]?TYPES[e.type].label:e.type), csvCell(e.amount) ].join(","));
         });
-        toast(entryCount > 0 ? "Exported "+entryCount+" entries" : "Exported your category list");
-        return;
-      } catch(err){
-        if(err && err.name === "AbortError"){ toast("Export cancelled", true); return; }
-        console.warn("Native file export failed; trying another export method", err);
-      }
+      });
     }
 
-    // Desktop browsers such as Chrome/Edge can show a real save-location picker.
-    if(window.showSaveFilePicker){
-      try {
+    var base = sanitizeFilename($("fnameInput") ? $("fnameInput").value : "");
+    if(!base) base = defaultFileBase();
+    var filename = base + ".csv";
+    var csvText = lines.join("\r\n");
+
+    var result = await saveTextFile(filename, csvText, "text/csv");
+    if(result === "cancelled"){ toast("Save cancelled", true); return; }
+    if(result === "shared" || result === "saved"){ toast("Saved \u201C" + filename + "\u201D"); return; }
+    // downloaded to the browser's Downloads location
+    toast("Downloaded \u201C" + filename + "\u201D \u2192 your Downloads folder");
+  }
+
+  // CSV export — identical approach to the Gym Logger:
+  //  1. Web Share with a file  -> iOS/Android share sheet, incl. "Save to Files" (pick any folder)
+  //  2. File System Access API -> desktop Chrome/Edge: native "Save As" (choose folder + name)
+  //  3. Anchor download         -> other desktop browsers (Downloads folder)
+  // Returns "shared" | "saved" | "cancelled" | "downloaded".
+  async function saveTextFile(filename, content, mime){
+    mime = mime || "text/plain";
+    var type = mime + ";charset=utf-8";
+
+    // 1. Web Share first so iPhone/iPad gets the share sheet -> Save to Files.
+    try {
+      if(navigator.canShare){
+        var file = new File([content], filename, { type:type });
+        if(navigator.canShare({ files:[file] })){
+          await navigator.share({ files:[file], title:filename });
+          return "shared";
+        }
+      }
+    } catch(err){
+      if(err && err.name === "AbortError") return "cancelled";
+      console.warn("Share failed; trying the next method", err);
+    }
+
+    // 2. File System Access save dialog (desktop Chrome/Edge).
+    try {
+      if(window.showSaveFilePicker){
+        var ext = "." + filename.split(".").pop();
+        var accept = {}; accept[mime] = [ext];
         var handle = await window.showSaveFilePicker({
           suggestedName: filename,
-          types: [{
-            description: "CSV file",
-            accept: { "text/csv": [".csv"] }
-          }]
+          types: [{ description: mime === "text/csv" ? "CSV file" : "Text file", accept: accept }]
         });
         var writable = await handle.createWritable();
-        await writable.write(blob);
+        await writable.write(new Blob([content], { type:type }));
         await writable.close();
-        toast(entryCount > 0 ? "Exported "+entryCount+" entries to CSV" : "Exported your category list to CSV");
-        return;
-      } catch(err){
-        if(err && err.name === "AbortError"){ toast("Export cancelled", true); return; }
-        console.warn("File picker export failed; falling back to download", err);
+        return "saved";
       }
+    } catch(err){
+      if(err && err.name === "AbortError") return "cancelled";
+      console.warn("Save picker failed; falling back to download", err);
     }
 
-    // Final fallback: force a normal browser download. Android usually places this
-    // in Downloads; iOS Safari will offer its standard download/file handling.
-    var url = URL.createObjectURL(blob);
+    // 3. Anchor download fallback.
+    var url = URL.createObjectURL(new Blob([content], { type:type }));
     var a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.rel = "noopener";
+    a.href = url; a.download = filename; a.rel = "noopener";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 500);
-    toast(entryCount > 0 ? "Exported "+entryCount+" entries as CSV" : "Exported your category list as CSV");
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    return "downloaded";
   }
 
   /* ---------------- CSV import ---------------- */
+  // Restore the complete app state saved in the #emm-state line (full fidelity:
+  // entry ids, transfer links, and every New Pot sub-ledger).
+  function loadFileState(st){
+    function normEntry(e){
+      e = e || {};
+      var t = TYPES[e.type] ? e.type : "others";
+      var amt = (typeof e.amount === "number") ? e.amount : parseFloat(e.amount);
+      var out = {
+        id: e.id || uid(),
+        date: e.date ? String(e.date) : "",
+        description: e.description ? String(e.description) : "",
+        category: e.category ? String(e.category) : "",
+        type: t,
+        amount: isFinite(amt) ? Math.round(amt*100)/100 : 0
+      };
+      if(e.transferId) out.transferId = e.transferId;
+      return out;
+    }
+    pushUndo();
+    entries = Array.isArray(st.entries) ? st.entries.map(normEntry) : [];
+    var subs = {};
+    if(st.subLedgers && typeof st.subLedgers === "object"){
+      Object.keys(st.subLedgers).forEach(function(k){
+        var s = st.subLedgers[k] || {};
+        subs[k] = { parentId: s.parentId || k, entries: Array.isArray(s.entries) ? s.entries.map(normEntry) : [] };
+      });
+    }
+    subLedgers = subs;
+    currentLedgerId = null;                 // always open into the main ledger
+    if(Array.isArray(st.categories) && st.categories.length){ categories = st.categories.map(String); }
+    if(st.currency){
+      var csel = $("curSel");
+      currency = st.currency;
+      if(csel){
+        var has = Array.prototype.some.call(csel.options, function(o){ return o.value === st.currency; });
+        if(has) csel.value = st.currency;
+      }
+    }
+    search = ""; if($("searchInput")) $("searchInput").value = "";
+    sort = { key:"date", dir:-1 };
+    renderAll();
+    var subCount = Object.keys(subLedgers).length;
+    toast("Opened " + entries.length + " entries" + (subCount ? " \u00B7 " + subCount + " sub-ledger" + (subCount>1?"s":"") : ""));
+  }
+
   function parseCSV(text){
     var rows = [], row = [], field = "", inQ = false;
     text = text.replace(/^\uFEFF/, ""); // strip BOM
@@ -1457,16 +1665,106 @@
     return null;
   }
 
+  // Normalise a date string to YYYY-MM-DD when it parses.
+  function normDate(date){
+    if(date && !/^\d{4}-\d{2}-\d{2}$/.test(date)){
+      var d = new Date(date);
+      if(!isNaN(d)){ var p = function(x){ return String(x).padStart(2,"0"); }; return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); }
+    }
+    return date;
+  }
+
+  // Parse a block of "Date,Description,Category,Type,Amount" rows into entries.
+  function parseLedgerRows(bodyRows, signedFmt){
+    var out = [], skipped = 0;
+    if(!bodyRows || bodyRows.length === 0) return { entries:out, skipped:0 };
+    var head = bodyRows[0].map(function(x){ return String(x).trim().toLowerCase(); });
+    var hasHeader = head.indexOf("amount") >= 0 || head.indexOf("type") >= 0 || head.indexOf("description") >= 0;
+    var idx = { date:0, description:1, category:2, type:3, amount:4 };
+    var start = 0;
+    if(hasHeader){
+      idx.date = head.indexOf("date"); idx.description = head.indexOf("description");
+      idx.category = head.indexOf("category"); idx.type = head.indexOf("type"); idx.amount = head.indexOf("amount");
+      start = 1;
+    }
+    for(var i=start;i<bodyRows.length;i++){
+      var r = bodyRows[i];
+      if(r.length === 1 && String(r[0]).trim() === "") continue;
+      var get = function(k){ return (idx[k] >= 0 && r[idx[k]] !== undefined) ? String(r[idx[k]]).trim() : ""; };
+      var ty = normType(get("type"));
+      var rawAmt = get("amount").replace(/[^0-9.\-]/g,"");
+      var amt = parseFloat(rawAmt);
+      if(!ty || !isFinite(amt)){ skipped++; continue; }
+      var signed = signedFmt ? amt : (amt < 0 ? amt : (ty === "income" ? amt : -amt));
+      out.push({ id:uid(), date:normDate(get("date")), description:get("description")||TYPES[ty].label,
+        category:get("category"), type:ty, amount:Math.round(signed*100)/100 });
+    }
+    return { entries:out, skipped:skipped };
+  }
+
+  // Parse sub-ledger rows into ordered groups using a column-index map (so it
+  // works whether or not the file includes a Currency column).
+  function parsePotGroups(subRows, idx, signedFmt){
+    var groups = [], byLabel = {};
+    var get = function(r, k){ var i = idx[k]; return (i >= 0 && r[i] !== undefined) ? String(r[i]).trim() : ""; };
+    subRows.forEach(function(r){
+      if(r.length === 1 && String(r[0]).trim() === "") return;
+      var pot = get(r, "pot");
+      var ty = normType(get(r, "type"));
+      var rawAmt = get(r, "amount").replace(/[^0-9.\-]/g,"");
+      var amt = parseFloat(rawAmt);
+      if(!pot || !ty || !isFinite(amt)) return;
+      var signed = signedFmt ? amt : (amt < 0 ? amt : (ty === "income" ? amt : -amt));
+      var cur = get(r, "currency");
+      var entry = { id:uid(), date:normDate(get(r, "date")),
+        description:get(r, "description") || (TYPES[ty]?TYPES[ty].label:""),
+        category:get(r, "category"), type:ty, amount:Math.round(signed*100)/100 };
+      if(!byLabel[pot]){ byLabel[pot] = { label:pot, currency:(cur||null), entries:[] }; groups.push(byLabel[pot]); }
+      if(cur && !byLabel[pot].currency) byLabel[pot].currency = cur;
+      byLabel[pot].entries.push(entry);
+    });
+    return groups;
+  }
+
+  // Re-link pot groups to their transfer rows. Every outgoing main row whose
+  // description matches the Pot Name shares the same sub-ledger, so clicking any
+  // of them opens the same pot.
+  function linkPots(mainEntries, groups){
+    var subs = {}, used = {}, i;
+    groups.forEach(function(g){
+      var matches = [];
+      for(i=0;i<mainEntries.length;i++){
+        if(used[i]) continue;
+        var e = mainEntries[i];
+        if(e.amount < 0 && e.description && e.description.trim().toLowerCase() === g.label.trim().toLowerCase()) matches.push(i);
+      }
+      if(matches.length === 0){               // fallback: next unused outgoing "Others" row
+        for(i=0;i<mainEntries.length;i++){
+          if(used[i]) continue;
+          if(mainEntries[i].type === "others" && mainEntries[i].amount < 0){ matches.push(i); break; }
+        }
+      }
+      if(matches.length === 0) return;         // orphan pot — no matching transfer row
+      var key = mainEntries[matches[0]].id;    // shared key = first matching transfer's id
+      subs[key] = { name:g.label, entries:g.entries };
+      if(g.currency) subs[key].currency = g.currency;
+      matches.forEach(function(mi){ used[mi] = true; mainEntries[mi].transferId = key; });
+    });
+    return subs;
+  }
+
   function importCSV(text, filename){
     var rows = parseCSV(text);
-    var imported = [], skipped = 0, foundCur = null, foundCats = null, signedFmt = false;
+    var foundCur = null, foundCats = null, signedFmt = false, foundState = null;
 
-    // strip blank + comment lines, capture #format, #currency and #categories
-    var clean = [];
+    // separate metadata (# lines) from body rows
+    var body = [];
     rows.forEach(function(r){
-      if(r.length === 1 && r[0].trim() === "") return;
+      if(r.length === 1 && r[0].trim() === "") return;       // blank line
       var first = (r[0]||"").trim();
       if(first.charAt(0) === "#"){
+        var msx = first.match(/^#\s*emm-state\s*=\s*(.*)$/i);
+        if(msx){ foundState = msx[1]; return; }
         var mf = first.match(/^#\s*format\s*=\s*(.+)$/i);
         if(mf){ signedFmt = /signed/i.test(mf[1]); return; }
         var mc = first.match(/^#\s*currency\s*=\s*(.+)$/i);
@@ -1479,56 +1777,62 @@
         }
         return;
       }
-      clean.push(r);
+      body.push(r);
     });
-    if(clean.length === 0 && !foundCats){ toast("That file has no rows", true); return; }
 
-    if(clean.length > 0){
-      // header detection
-      var head = clean[0].map(function(x){ return x.trim().toLowerCase(); });
-      var hasHeader = head.indexOf("amount") >= 0 || head.indexOf("type") >= 0 || head.indexOf("description") >= 0;
-      var idx = { date:0, description:1, category:2, type:3, amount:4 };
-      var start = 0;
-      if(hasHeader){
-        idx.date = head.indexOf("date");
-        idx.description = head.indexOf("description");
-        idx.category = head.indexOf("category");
-        idx.type = head.indexOf("type");
-        idx.amount = head.indexOf("amount");
-        start = 1;
-      }
-
-      for(var i=start;i<clean.length;i++){
-        var r = clean[i];
-        var get = function(k){ return (idx[k] >= 0 && r[idx[k]] !== undefined) ? String(r[idx[k]]).trim() : ""; };
-        var ty = normType(get("type"));
-        var rawAmt = get("amount").replace(/[^0-9.\-]/g,"");
-        var amt = parseFloat(rawAmt);
-        if(!ty || !isFinite(amt)){ skipped++; continue; }
-        // resolve signed amount: positive = money in, negative = money out
-        var signed;
-        if(signedFmt){ signed = amt; }
-        else if(amt < 0){ signed = amt; }                      // explicit expense
-        else { signed = (ty === "income") ? amt : -amt; }      // legacy magnitude -> sign by type
-        var date = get("date");
-        // normalise date to YYYY-MM-DD if it parses
-        if(date && !/^\d{4}-\d{2}-\d{2}$/.test(date)){
-          var d = new Date(date);
-          if(!isNaN(d)){
-            var p = function(x){ return String(x).padStart(2,"0"); };
-            date = d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
-          }
-        }
-        imported.push({ id:uid(), date:date, description:get("description")||TYPES[ty].label,
-          category:get("category"), type:ty, amount:Math.round(signed*100)/100 });
-      }
+    // Back-compat: files saved with the old hidden state line still restore fully.
+    if(foundState){
+      try { loadFileState(JSON.parse(decodeURIComponent(foundState))); return; }
+      catch(err){ console.warn("Couldn't read embedded state; importing rows only", err); }
     }
+
+    if(body.length === 0 && !foundCats){ toast("That file has no rows", true); return; }
+
+    // Detect the sub-ledger table header: "Pot,Date,Description,Category,Type,Amount".
+    var subHeaderIdx = -1;
+    for(var bi=0; bi<body.length; bi++){
+      var hc = body[bi].map(function(x){ return String(x).trim().toLowerCase(); });
+      if(hc[0] === "pot" && hc.indexOf("amount") >= 0){ subHeaderIdx = bi; break; }
+    }
+
+    var mainRows, subRows = null, subIdx = null;
+    if(subHeaderIdx >= 0){
+      var mainEnd = subHeaderIdx;
+      // drop the "New Pot sub-ledgers" title row that precedes the sub-table
+      if(mainEnd > 0 && String(body[mainEnd-1][0]||"").trim().toLowerCase() === "new pot sub-ledgers") mainEnd--;
+      mainRows = body.slice(0, mainEnd);
+      subRows = body.slice(subHeaderIdx + 1);
+      // map the sub-table columns (Currency is optional / older files omit it)
+      var sh = body[subHeaderIdx].map(function(x){ return String(x).trim().toLowerCase(); });
+      subIdx = {
+        pot: sh.indexOf("pot"), currency: sh.indexOf("currency"), date: sh.indexOf("date"),
+        description: sh.indexOf("description"), category: sh.indexOf("category"),
+        type: sh.indexOf("type"), amount: sh.indexOf("amount")
+      };
+    } else {
+      mainRows = body;
+    }
+
+    var mainRes = parseLedgerRows(mainRows, signedFmt);
+    var imported = mainRes.entries, skipped = mainRes.skipped;
 
     if(imported.length === 0 && !foundCats){ toast("No valid rows found in that CSV", true); return; }
 
+    var builtSubs = {};
+    if(subRows){ builtSubs = linkPots(imported, parsePotGroups(subRows, subIdx, signedFmt)); }
+
     pushUndo();
-    setActiveEntries(imported);
-    if(!currentLedgerId) subLedgers = {};
+    // A file that carries a sub-ledger table is a full document: replace
+    // everything and return to the main ledger. Otherwise keep per-view behaviour.
+    if(subRows){
+      entries = imported;
+      subLedgers = builtSubs;
+      currentLedgerId = null;
+      search = ""; if($("searchInput")) $("searchInput").value = "";
+    } else {
+      setActiveEntries(imported);
+      if(!currentLedgerId) subLedgers = {};
+    }
 
     // restore category pick-list: honor the file's list exactly if present,
     // otherwise derive defaults + any categories used by imported entries
@@ -1548,11 +1852,14 @@
       var has = Array.prototype.some.call(csel.options, function(o){ return o.value === foundCur; });
       if(has){ csel.value = foundCur; currency = foundCur; }
     }
-    // sensible default sort after import
+
     sort = { key:"date", dir:-1 };
     renderAll();
-    var msg = imported.length > 0 ? ("Opened "+imported.length+" entries") : "Opened category list";
-    if(skipped > 0){ toast(msg+" ("+skipped+" rows skipped)", true); }
+
+    var subCount = Object.keys(builtSubs).length;
+    var msg = imported.length > 0 ? ("Opened " + imported.length + " entries") : "Opened category list";
+    if(subCount) msg += " \u00B7 " + subCount + " sub-ledger" + (subCount>1?"s":"");
+    if(skipped > 0){ toast(msg + " (" + skipped + " rows skipped)", true); }
     else { toast(msg); }
   }
 
@@ -1646,7 +1953,22 @@
     });
 
     $("saveBtn").addEventListener("click", exportCSV);
-    $("openBtn").addEventListener("click", function(){ $("fileInput").click(); });
+    if($("fnameInput")){
+      $("fnameInput").value = defaultFileBase();
+      // tidy the name when the field loses focus (strip illegal chars, trailing .csv)
+      $("fnameInput").addEventListener("blur", function(){
+        var v = sanitizeFilename(this.value);
+        this.value = v || defaultFileBase();
+      });
+      // Enter in the field triggers a save
+      $("fnameInput").addEventListener("keydown", function(ev){
+        if(ev.key === "Enter"){ ev.preventDefault(); exportCSV(); }
+      });
+    }
+    $("openBtn").addEventListener("click", function(){
+      if(currentLedgerId){ backToMainLedger(); }
+      else { $("fileInput").click(); }
+    });
     $("fileInput").addEventListener("change", function(ev){
       var f = ev.target.files && ev.target.files[0];
       if(!f) return;
@@ -1668,7 +1990,7 @@
       ev.target.value = "";
     });
 
-    $("curSel").addEventListener("change", function(){ pushUndo(); currency = $("curSel").value; renderAll(); });
+    $("curSel").addEventListener("change", function(){ pushUndo(); setActiveCurrency($("curSel").value); renderAll(); });
 
     // category manager
     $("addCatBtn").addEventListener("click", function(){
@@ -1692,13 +2014,6 @@
       });
     });
 
-    var zin = $("chartZoomIn"), zout = $("chartZoomOut"), zreset = $("chartZoomReset");
-    if(zin) zin.addEventListener("click", function(){ if(chartZoom < chartZoomClasses.length - 1){ chartZoom++; applyChartZoom(); } });
-    if(zout) zout.addEventListener("click", function(){ if(chartZoom > 0){ chartZoom--; applyChartZoom(); } });
-    if(zreset) zreset.addEventListener("click", function(){ chartZoom = 1; applyChartZoom(); });
-    window.addEventListener("resize", function(){ applyChartZoom(); });
-    applyChartZoom();
-
     // flow chart toggle
     Array.prototype.forEach.call(document.querySelectorAll("#flowSeg button"), function(b){
       b.addEventListener("click", function(){
@@ -1707,6 +2022,21 @@
         b.classList.add("on");
         renderFlow();
       });
+    });
+
+    // Insights zoom controls
+    Array.prototype.forEach.call(document.querySelectorAll(".zoom"), function(ctrl){
+      var id = ctrl.getAttribute("data-target");
+      Array.prototype.forEach.call(ctrl.querySelectorAll(".zbtn"), function(b){
+        b.addEventListener("click", function(){
+          var act = b.getAttribute("data-z");
+          if(act === "in")        zoomState[id] = Math.min(ZOOM_STEPS.length-1, zoomState[id]+1);
+          else if(act === "out")  zoomState[id] = Math.max(0, zoomState[id]-1);
+          else                    zoomState[id] = 0;
+          applyZoom(id);
+        });
+      });
+      applyZoom(id); // set initial label + disabled state
     });
 
     // Start blank by default: no sample transactions are loaded.
