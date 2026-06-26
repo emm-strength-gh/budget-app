@@ -165,19 +165,39 @@
   }
 
   /* ---------- Charts ---------- */
-  .charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:26px}
-  .chart-card{padding:22px 24px 18px}
+  .insights-tools{
+    display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:-4px 0 13px;
+    color:var(--muted);font-size:12.5px;font-weight:600;
+  }
+  .zoom-controls{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;box-shadow:var(--shadow)}
+  .zoom-controls button{
+    border:none;background:none;color:var(--ink-soft);font:inherit;font-size:12.5px;font-weight:700;
+    min-width:32px;height:28px;padding:0 9px;border-radius:7px;cursor:pointer;transition:.15s;
+  }
+  .zoom-controls button:hover{background:var(--surface-2)}
+  .zoom-controls button:active{transform:translateY(1px)}
+  .zoom-controls button:disabled{opacity:.42;cursor:not-allowed}
+  .zoom-controls .zoom-label{min-width:54px;color:var(--muted)}
+  .charts{
+    --chart-h:260px;--chart-h-tall:300px;
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-bottom:26px;width:100%;min-width:0;
+  }
+  .charts.zoom-compact{--chart-h:220px;--chart-h-tall:250px}
+  .charts.zoom-large{--chart-h:330px;--chart-h-tall:380px}
+  .charts.zoom-xl{--chart-h:420px;--chart-h-tall:480px}
+  .chart-card{padding:22px 24px 18px;min-width:0;overflow:hidden}
   .chart-card.wide{grid-column:1 / -1}
-  .chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
-  .chart-head h3{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
-  .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px}
+  .chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;min-width:0}
+  .chart-head h3{font-size:14.5px;font-weight:700;letter-spacing:-.01em;min-width:0}
+  .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px;flex:none}
   .seg button{
     border:none;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);
     padding:5px 11px;border-radius:6px;cursor:pointer;transition:.15s;
   }
   .seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(20,30,45,.1)}
-  .canvas-box{position:relative;height:260px}
-  .canvas-box.tall{height:300px}
+  .canvas-box{position:relative;height:var(--chart-h);width:100%;min-width:0}
+  .canvas-box.tall{height:var(--chart-h-tall)}
+  .canvas-box canvas{display:block;width:100%!important;max-width:100%;height:100%!important}
   .chart-empty{
     position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     color:var(--faint);font-size:13.5px;text-align:center;gap:6px;
@@ -323,7 +343,10 @@
   /* ---------- Responsive ---------- */
   @media (max-width:920px){
     .hero{grid-template-columns:1fr}
-    .charts{grid-template-columns:1fr}
+    .charts{grid-template-columns:minmax(0,1fr);--chart-h:240px;--chart-h-tall:270px}
+    .charts.zoom-compact{--chart-h:200px;--chart-h-tall:230px}
+    .charts.zoom-large{--chart-h:310px;--chart-h-tall:350px}
+    .charts.zoom-xl{--chart-h:390px;--chart-h-tall:430px}
     .ledger-grid{grid-template-columns:1fr}
   }
   @media (max-width:560px){
@@ -369,7 +392,11 @@
     .summary{padding:22px 20px}
     .stat-row{gap:18px}
     .alloc{padding:20px 18px 24px}
-    .chart-card{padding:18px 16px 14px}
+    .insights-tools{justify-content:space-between;margin-top:-2px}
+    .chart-card{padding:18px 14px 14px}
+    .chart-head{align-items:flex-start;flex-direction:column;gap:10px}
+    .seg{width:100%}
+    .seg button{flex:1;padding-left:7px;padding-right:7px}
     .ledger-bar{flex-wrap:wrap}
     .search input{width:100%}
     .search{flex:1 1 100%;order:3}
@@ -416,7 +443,7 @@
       </button>
       <button class="btn primary" id="saveBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
-        <span class="lbl">Save CSV</span><span class="lbl-sm">Save</span>
+        <span class="lbl">Save File</span><span class="lbl-sm">Save</span>
       </button>
       <input type="file" id="fileInput" accept=".csv,text/csv" hidden />
       <input type="file" id="monzoInput" accept=".csv,text/csv" hidden />
@@ -523,7 +550,15 @@
 
   <!-- CHARTS -->
   <div class="section-eyebrow">Insights</div>
-  <section class="charts">
+  <div class="insights-tools" aria-label="Graph size controls">
+    <span>Graph size</span>
+    <div class="zoom-controls">
+      <button id="chartZoomOut" type="button" aria-label="Zoom graphs out">−</button>
+      <button id="chartZoomReset" type="button" class="zoom-label" aria-label="Reset graph size">100%</button>
+      <button id="chartZoomIn" type="button" aria-label="Zoom graphs in">+</button>
+    </div>
+  </div>
+  <section class="charts" id="chartsSection">
     <div class="card chart-card wide">
       <div class="chart-head">
         <h3>Cash flow over time</h3>
@@ -664,7 +699,7 @@
   </div>
 
   <footer>
-    <b>Emm Budget App</b> — your data stays on this device. Save a CSV to keep it.
+    <b>Emm Budget App</b> — your data stays on this device. Export a CSV to keep it.
   </footer>
 </main>
 
@@ -683,6 +718,9 @@
   var sort = { key:"date", dir:-1 };  // dir 1 asc, -1 desc
   var search = "";
   var flowMode = "monthly";
+  var chartZoom = 1; // 0 compact, 1 normal, 2 large, 3 extra large
+  var chartZoomLabels = ["Compact","100%","Large","XL"];
+  var chartZoomClasses = ["zoom-compact","","zoom-large","zoom-xl"];
   var charts = { flow:null, donut:null, cat:null };
 
   var DEFAULT_CATEGORIES = ["Housing","Food","Bills","Transport","Health","Dining","Leisure","Shopping","Subscriptions","Savings","Emergency Fund","Investments"];
@@ -1058,6 +1096,22 @@
     renderCat();
   }
 
+  function applyChartZoom(){
+    var sec = $("chartsSection");
+    if(!sec) return;
+    chartZoomClasses.forEach(function(c){ if(c) sec.classList.remove(c); });
+    var cls = chartZoomClasses[chartZoom];
+    if(cls) sec.classList.add(cls);
+    var lab = $("chartZoomReset");
+    if(lab) lab.textContent = chartZoomLabels[chartZoom];
+    var out = $("chartZoomOut"), inn = $("chartZoomIn");
+    if(out) out.disabled = chartZoom <= 0;
+    if(inn) inn.disabled = chartZoom >= chartZoomClasses.length - 1;
+    setTimeout(function(){
+      Object.keys(charts).forEach(function(k){ if(charts[k]) charts[k].resize(); });
+    }, 40);
+  }
+
   function renderFlow(){
     var dated = activeEntries().filter(function(e){ return monthKey(e.date); });
     var empty = $("flowEmpty"), box = $("flowChart");
@@ -1294,7 +1348,7 @@
     return v;
   }
   async function exportCSV(){
-    if(activeEntries().length === 0 && categories.length === 0){ toast("Nothing to save yet", true); return; }
+    if(activeEntries().length === 0 && categories.length === 0){ toast("Nothing to export yet", true); return; }
     var entryCount = activeEntries().length;
     var header = ["Date","Description","Category","Type","Amount"];
     var lines = [
@@ -1307,11 +1361,37 @@
       lines.push([ csvCell(e.date), csvCell(e.description), csvCell(e.category),
         csvCell(TYPES[e.type]?TYPES[e.type].label:e.type), csvCell(e.amount) ].join(","));
     });
-    var filename = "emm-budget-" + todayISO() + ".csv";
-    var blob = new Blob([ lines.join("\r\n") ], { type:"text/csv;charset=utf-8;" });
 
-    // Prefer the File System Access API so the user can choose the save location.
-    // Browsers that do not support it will fall back to the standard download flow.
+    var filename = "emm-budget-" + todayISO() + ".csv";
+    var csvText = lines.join("\r\n");
+    var blob = new Blob([ csvText ], { type:"text/csv;charset=utf-8;" });
+    var file = null;
+
+    try {
+      file = new File([blob], filename, { type:"text/csv" });
+    } catch(e) {
+      file = null;
+    }
+
+    // Mobile-first export: iPhone/iPad and many Android browsers expose the
+    // native share/export sheet for files. On iPhone this lets the user choose
+    // Save to Files. On Android it can save/share the CSV to Downloads or apps.
+    if(file && navigator.share && navigator.canShare && navigator.canShare({ files:[file] })){
+      try {
+        await navigator.share({
+          files:[file],
+          title:"Emm Budget CSV",
+          text:"Export Emm Budget CSV"
+        });
+        toast(entryCount > 0 ? "Exported "+entryCount+" entries" : "Exported your category list");
+        return;
+      } catch(err){
+        if(err && err.name === "AbortError"){ toast("Export cancelled", true); return; }
+        console.warn("Native file export failed; trying another export method", err);
+      }
+    }
+
+    // Desktop browsers such as Chrome/Edge can show a real save-location picker.
     if(window.showSaveFilePicker){
       try {
         var handle = await window.showSaveFilePicker({
@@ -1324,21 +1404,24 @@
         var writable = await handle.createWritable();
         await writable.write(blob);
         await writable.close();
-        toast(entryCount > 0 ? "Saved "+entryCount+" entries to CSV" : "Saved your category list to CSV");
+        toast(entryCount > 0 ? "Exported "+entryCount+" entries to CSV" : "Exported your category list to CSV");
         return;
       } catch(err){
-        if(err && err.name === "AbortError"){ toast("Save cancelled", true); return; }
-        console.warn("File picker save failed; falling back to download", err);
+        if(err && err.name === "AbortError"){ toast("Export cancelled", true); return; }
+        console.warn("File picker export failed; falling back to download", err);
       }
     }
 
+    // Final fallback: force a normal browser download. Android usually places this
+    // in Downloads; iOS Safari will offer its standard download/file handling.
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
     a.download = filename;
+    a.rel = "noopener";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 500);
-    toast(entryCount > 0 ? "Downloaded "+entryCount+" entries to CSV" : "Downloaded your category list to CSV");
+    toast(entryCount > 0 ? "Exported "+entryCount+" entries as CSV" : "Exported your category list as CSV");
   }
 
   /* ---------------- CSV import ---------------- */
@@ -1608,6 +1691,13 @@
         renderLedger();
       });
     });
+
+    var zin = $("chartZoomIn"), zout = $("chartZoomOut"), zreset = $("chartZoomReset");
+    if(zin) zin.addEventListener("click", function(){ if(chartZoom < chartZoomClasses.length - 1){ chartZoom++; applyChartZoom(); } });
+    if(zout) zout.addEventListener("click", function(){ if(chartZoom > 0){ chartZoom--; applyChartZoom(); } });
+    if(zreset) zreset.addEventListener("click", function(){ chartZoom = 1; applyChartZoom(); });
+    window.addEventListener("resize", function(){ applyChartZoom(); });
+    applyChartZoom();
 
     // flow chart toggle
     Array.prototype.forEach.call(document.querySelectorAll("#flowSeg button"), function(b){
