@@ -292,6 +292,20 @@
   .empty-state h4{font-size:15px;color:var(--ink-soft);font-weight:700;margin-bottom:4px}
   .empty-state p{font-size:13px;max-width:300px;margin:0 auto}
 
+  .transfer-btn{
+    width:100%;height:42px;border:1px solid var(--border-strong);border-radius:10px;
+    background:var(--others-bg);color:var(--others);font:inherit;font-size:13.5px;font-weight:700;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;
+    transition:background .15s,border-color .15s,transform .05s;
+  }
+  .transfer-btn:hover{background:#E3E7EC;border-color:var(--faint)}
+  .transfer-btn:active{transform:translateY(1px)}
+  .transfer-btn svg{width:16px;height:16px}
+  .back-btn{height:34px;padding:0 11px;margin-right:2px}
+  tr.transfer-row{cursor:pointer}
+  tr.transfer-row td.desc{color:var(--others)}
+  .open-note{display:block;font-weight:600;color:var(--faint);font-size:11.5px;margin-top:2px}
+
   /* toast */
   .toast{
     position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);
@@ -354,6 +368,10 @@
       <button class="btn" id="openBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
         <span class="lbl">Open</span><span class="lbl-sm">Open</span>
+      </button>
+      <button class="btn" id="undoBtn" title="Undo last action">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>
+        <span class="lbl">Undo</span><span class="lbl-sm">Undo</span>
       </button>
       <button class="btn" id="monzoBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 13l2 2 4-4"/></svg>
@@ -526,6 +544,8 @@
           <button data-t="savings"><span class="sw" style="background:var(--savings)"></span>Savings</button>
           <button data-t="others"><span class="sw" style="background:var(--others)"></span>Others</button>
         </div>
+        <button class="transfer-btn" id="transferPHBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3"/><path d="M17 17H6l3 3"/><path d="M18 7 6 19"/></svg>Transfer to New Pot</button>
       </div>
 
       <div class="field">
@@ -573,7 +593,11 @@
 
     <div class="card ledger-card">
       <div class="ledger-bar">
-        <h3>Ledger</h3>
+        <button class="btn back-btn" id="backMainBtn" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          Back
+        </button>
+        <h3 id="ledgerTitle">Ledger</h3>
         <span class="count" id="ledgerCount">0 entries</span>
         <div class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -613,7 +637,10 @@
 "use strict";
 (function(){
   /* ---------------- State ---------------- */
-  var entries = [];        // {id, date, description, category, type, amount}
+  var entries = [];        // main ledger entries: {id, date, description, category, type, amount, transferId?}
+  var subLedgers = {};     // transferId -> {parentId, entries}
+  var currentLedgerId = null; // null = main ledger; transfer id = PH sub-ledger
+  var undoStack = [];
   var currency = "£";
   var activeType = "needs";
   var sort = { key:"date", dir:-1 };  // dir 1 asc, -1 desc
@@ -672,6 +699,51 @@
 
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
+  function activeEntries(){
+    return currentLedgerId && subLedgers[currentLedgerId] ? subLedgers[currentLedgerId].entries : entries;
+  }
+  function setActiveEntries(list){
+    if(currentLedgerId && subLedgers[currentLedgerId]) subLedgers[currentLedgerId].entries = list;
+    else entries = list;
+  }
+  function cloneState(){
+    return JSON.stringify({ entries:entries, subLedgers:subLedgers, currentLedgerId:currentLedgerId, currency:currency, categories:categories, activeType:activeType });
+  }
+  function pushUndo(){
+    undoStack.push(cloneState());
+    if(undoStack.length > 7) undoStack.shift();
+    updateUndoButton();
+  }
+  function restoreState(raw){
+    var st = JSON.parse(raw);
+    entries = st.entries || [];
+    subLedgers = st.subLedgers || {};
+    currentLedgerId = st.currentLedgerId || null;
+    currency = st.currency || "£";
+    categories = st.categories || DEFAULT_CATEGORIES.slice();
+    activeType = st.activeType || "needs";
+    var cs = $("curSel"); if(cs) cs.value = currency;
+    Array.prototype.forEach.call(document.querySelectorAll("#typePick button"), function(x){ x.classList.toggle("on", x.getAttribute("data-t") === activeType); });
+    updateUndoButton();
+  }
+  function undoLast(){
+    if(undoStack.length === 0){ toast("Nothing to undo", true); return; }
+    restoreState(undoStack.pop());
+    renderAll();
+    toast("Undid last action");
+  }
+  function updateUndoButton(){
+    var b = $("undoBtn");
+    if(!b) return;
+    b.disabled = undoStack.length === 0;
+    b.style.opacity = undoStack.length === 0 ? ".55" : "1";
+  }
+  function currentLedgerName(){
+    if(!currentLedgerId) return "Ledger";
+    var parent = entries.filter(function(e){ return e.id === currentLedgerId; })[0];
+    return "PH sub-ledger" + (parent ? " · " + fmt(Math.abs(parent.amount)) : "");
+  }
+
   function fmt(n){
     var neg = n < 0;
     var v = Math.abs(n);
@@ -728,7 +800,7 @@
     var KEYS = ["income","needs","wants","savings","others"];
     var inflow = {}, outflow = {};
     KEYS.forEach(function(k){ inflow[k] = 0; outflow[k] = 0; });
-    entries.forEach(function(e){
+    activeEntries().forEach(function(e){
       if(inflow[e.type] === undefined) return;
       if(e.amount >= 0) inflow[e.type] += e.amount;
       else outflow[e.type] += -e.amount;
@@ -756,10 +828,10 @@
     nv.textContent = fmt(net);
     nv.className = "net-value num " + (net < 0 ? "neg" : "pos");
 
-    if(entries.length === 0){
+    if(activeEntries().length === 0){
       $("netSub").textContent = "Add an entry, or import a CSV, to get started.";
     } else {
-      $("netSub").innerHTML = "<b>"+fmt(t.moneyIn)+"</b> in and <b>"+fmt(t.moneyOut)+"</b> out across "+entries.length+" entries.";
+      $("netSub").innerHTML = "<b>"+fmt(t.moneyIn)+"</b> in and <b>"+fmt(t.moneyOut)+"</b> out across "+activeEntries().length+" entries.";
     }
     $("sumIncome").textContent = fmt(t.moneyIn);     // Money in
     $("sumSpent").textContent  = fmt(t.moneyOut);    // Money out
@@ -797,7 +869,7 @@
 
   /* ---------------- Render: ledger table ---------------- */
   function sortedEntries(){
-    var arr = entries.slice();
+    var arr = activeEntries().slice();
     var k = sort.key, dir = sort.dir;
     arr.sort(function(a,b){
       var av, bv;
@@ -823,9 +895,9 @@
                (TYPES[e.type] ? TYPES[e.type].label.toLowerCase().indexOf(q) >= 0 : false);
       });
     }
-    $("ledgerCount").textContent = entries.length + (entries.length === 1 ? " entry" : " entries");
+    $("ledgerCount").textContent = activeEntries().length + (activeEntries().length === 1 ? " entry" : " entries");
 
-    if(entries.length === 0){
+    if(activeEntries().length === 0){
       body.innerHTML = "";
       $("ledgerEmpty").hidden = false;
       $("ledgerEmpty").querySelector("h4").textContent = "No entries yet";
@@ -845,9 +917,9 @@
     rows.forEach(function(e){
       var ty = TYPES[e.type] || TYPES.others;
       var isIn = e.amount >= 0;
-      html += '<tr>'
+      html += '<tr class="'+(e.transferId ? 'transfer-row' : '')+'" '+(e.transferId ? 'data-transfer-id="'+e.transferId+'"' : '')+'>'
         + '<td class="date">'+niceDate(e.date)+'</td>'
-        + '<td class="desc">'+esc(e.description||"—")
+        + '<td class="desc">'+esc(e.description||"—") + (e.transferId ? '<span class="open-note">Click to open PH sub-ledger</span>' : '')
           + (e.category ? '<div style="font-weight:500;color:var(--faint);font-size:12px;margin-top:1px">'+esc(e.category)+'</div>' : '')
         + '</td>'
         + '<td><span class="pill '+e.type+'"><span class="sw" style="background:'+ty.color+'"></span>'+ty.label+'</span></td>'
@@ -860,7 +932,10 @@
     body.innerHTML = html;
 
     Array.prototype.forEach.call(body.querySelectorAll(".del"), function(b){
-      b.addEventListener("click", function(){ deleteEntry(b.getAttribute("data-id")); });
+      b.addEventListener("click", function(ev){ ev.stopPropagation(); deleteEntry(b.getAttribute("data-id")); });
+    });
+    Array.prototype.forEach.call(body.querySelectorAll("tr.transfer-row"), function(r){
+      r.addEventListener("click", function(){ openSubLedger(r.getAttribute("data-transfer-id")); });
     });
 
     // sort header indicators
@@ -909,6 +984,7 @@
     name = (name||"").trim();
     if(!name){ toast("Type a category name first", true); return; }
     if(catExists(name)){ toast("\u201C"+name+"\u201D is already a category", true); return; }
+    pushUndo();
     categories.push(name);
     renderCategories();
     toast("Added category \u201C"+name+"\u201D");
@@ -916,11 +992,13 @@
   function deleteCategory(name){
     var i = categories.indexOf(name);
     if(i < 0) return;
+    pushUndo();
     categories.splice(i,1);
     renderCategories();
     toast("Removed category \u201C"+name+"\u201D");
   }
   function restoreDefaultCategories(){
+    pushUndo();
     categories = DEFAULT_CATEGORIES.slice();
     renderCategories();
     toast("Default categories restored");
@@ -944,7 +1022,7 @@
   }
 
   function renderFlow(){
-    var dated = entries.filter(function(e){ return monthKey(e.date); });
+    var dated = activeEntries().filter(function(e){ return monthKey(e.date); });
     var empty = $("flowEmpty"), box = $("flowChart");
     if(dated.length === 0){ empty.hidden = false; box.style.opacity = 0; if(charts.flow){ charts.flow.destroy(); charts.flow=null; } return; }
     empty.hidden = true; box.style.opacity = 1;
@@ -1040,7 +1118,7 @@
 
   function renderCat(){
     var map = {};
-    entries.forEach(function(e){
+    activeEntries().forEach(function(e){
       if(e.amount >= 0) return;                 // money out only
       var c = (e.category && e.category.trim()) ? e.category.trim() : (TYPES[e.type]? TYPES[e.type].label : "Other");
       if(!map[c]) map[c] = { val:0, type:e.type };
@@ -1082,6 +1160,41 @@
     renderLedger();
     renderCharts();
     renderCategories();
+    renderViewMode();
+    updateUndoButton();
+  }
+
+  function renderViewMode(){
+    var inSub = !!currentLedgerId;
+    if($("backMainBtn")) $("backMainBtn").hidden = !inSub;
+    if($("ledgerTitle")) $("ledgerTitle").textContent = currentLedgerName();
+    var sub = document.querySelector(".add-card .sub");
+    if(sub) sub.textContent = inSub ? "Log PH income or where the transferred money went." : "Log income or where money went.";
+  }
+
+  function clearEntryForm(){
+    if($("fDesc")) $("fDesc").value = "";
+    if($("fCat")) $("fCat").value = "";
+    if($("fAmt")) $("fAmt").value = "";
+    if($("fDate")) $("fDate").value = todayISO();
+  }
+  function openSubLedger(id){
+    if(!id || !subLedgers[id]){ toast("That PH sub-ledger no longer exists", true); return; }
+    currentLedgerId = id;
+    search = "";
+    if($("searchInput")) $("searchInput").value = "";
+    clearEntryForm();
+    sort = { key:"date", dir:-1 };
+    renderAll();
+    toast("Opened PH sub-ledger");
+  }
+  function backToMainLedger(){
+    currentLedgerId = null;
+    search = "";
+    if($("searchInput")) $("searchInput").value = "";
+    clearEntryForm();
+    sort = { key:"date", dir:-1 };
+    renderAll();
   }
 
   /* ---------------- Mutations ---------------- */
@@ -1094,9 +1207,10 @@
     if(!isFinite(amt) || amt <= 0){ toast("Enter an amount greater than zero", true); $("fAmt").focus(); return; }
     if(!desc){ desc = TYPES[activeType].label; }
 
+    pushUndo();
     var mag = Math.round(amt*100)/100;
     var signed = (activeType === "income") ? mag : -mag;   // income raises balance; everything else lowers it
-    entries.push({ id:uid(), date:date, description:desc, category:cat, type:activeType, amount:signed });
+    activeEntries().push({ id:uid(), date:date, description:desc, category:cat, type:activeType, amount:signed });
 
     $("fDesc").value = ""; $("fCat").value = ""; $("fAmt").value = "";
     renderAll();
@@ -1104,24 +1218,34 @@
     toast("Added "+TYPES[activeType].label.toLowerCase()+": "+(signed<0?"\u2212":"+")+fmt(mag));
   }
 
-  function deleteEntry(id){
-    var idx = -1;
-    for(var i=0;i<entries.length;i++){ if(entries[i].id === id){ idx = i; break; } }
-    if(idx < 0) return;
-    var removed = entries.splice(idx,1)[0];
+  function addTransferToPH(){
+    if(currentLedgerId){ toast("Go back to the main ledger to create a PH transfer", true); return; }
+    var amt = parseFloat($("fAmt").value);
+    var date = $("fDate").value || todayISO();
+    if(!isFinite(amt) || amt <= 0){ toast("Enter the transfer amount first", true); $("fAmt").focus(); return; }
+    pushUndo();
+    var mag = Math.round(amt*100)/100;
+    var id = uid();
+    entries.push({ id:id, transferId:id, date:date, description:"sent cash to PH", category:"Transfer to PH", type:"others", amount:-mag });
+    subLedgers[id] = { parentId:id, entries:[{ id:uid(), date:date, description:"Transfer from main ledger", category:"Transfer to PH", type:"income", amount:mag }] };
+    $("fDesc").value = ""; $("fCat").value = ""; $("fAmt").value = "";
     renderAll();
-    // simple undo
-    var t = $("toast");
-    t.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>'
-      + '<span>Deleted</span><button id="undoBtn" style="margin-left:6px;background:rgba(255,255,255,.16);border:none;color:#fff;font:inherit;font-weight:700;font-size:12.5px;padding:4px 10px;border-radius:7px;cursor:pointer">Undo</button>';
-    t.className = "toast show";
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){ t.className="toast"; }, 4200);
-    var ub = $("undoBtn");
-    if(ub) ub.addEventListener("click", function(){
-      entries.splice(Math.min(idx, entries.length), 0, removed);
-      renderAll(); t.className="toast"; toast("Restored");
-    });
+    toast("Added Transfer to PH: −"+fmt(mag));
+  }
+
+  function deleteEntry(id){
+    var list = activeEntries();
+    var idx = -1;
+    for(var i=0;i<list.length;i++){ if(list[i].id === id){ idx = i; break; } }
+    if(idx < 0) return;
+    pushUndo();
+    var removed = list.splice(idx,1)[0];
+    if(!currentLedgerId && removed.transferId){
+      delete subLedgers[removed.transferId];
+      if(currentLedgerId === removed.transferId) currentLedgerId = null;
+    }
+    renderAll();
+    toast(removed && removed.transferId ? "Deleted PH transfer and its sub-ledger" : "Deleted entry");
   }
 
   /* ---------------- CSV export ---------------- */
@@ -1131,7 +1255,7 @@
     return v;
   }
   function exportCSV(){
-    if(entries.length === 0 && categories.length === 0){ toast("Nothing to save yet", true); return; }
+    if(activeEntries().length === 0 && categories.length === 0){ toast("Nothing to save yet", true); return; }
     var header = ["Date","Description","Category","Type","Amount"];
     var lines = [
       "#format=signed",
@@ -1150,7 +1274,7 @@
     a.download = "emm-budget-" + todayISO() + ".csv";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 500);
-    toast(entries.length > 0 ? "Saved "+entries.length+" entries to CSV" : "Saved your category list to CSV");
+    toast(activeEntries().length > 0 ? "Saved "+activeEntries().length+" entries to CSV" : "Saved your category list to CSV");
   }
 
   /* ---------------- CSV import ---------------- */
@@ -1255,7 +1379,9 @@
 
     if(imported.length === 0 && !foundCats){ toast("No valid rows found in that CSV", true); return; }
 
-    entries = imported;
+    pushUndo();
+    setActiveEntries(imported);
+    if(!currentLedgerId) subLedgers = {};
 
     // restore category pick-list: honor the file's list exactly if present,
     // otherwise derive defaults + any categories used by imported entries
@@ -1334,7 +1460,9 @@
 
     if(imported.length === 0){ toast("No transactions found in that Monzo file", true); return; }
 
-    entries = imported;
+    pushUndo();
+    setActiveEntries(imported);
+    if(!currentLedgerId) subLedgers = {};
     categories = catList.length ? catList.sort() : DEFAULT_CATEGORIES.slice();
     currency = "£";
     var cs = $("curSel"); if(cs) cs.value = "£";
@@ -1362,6 +1490,9 @@
     });
 
     $("addBtn").addEventListener("click", addEntry);
+    $("transferPHBtn").addEventListener("click", addTransferToPH);
+    $("undoBtn").addEventListener("click", undoLast);
+    $("backMainBtn").addEventListener("click", backToMainLedger);
     // enter-to-add from amount field
     ["fDesc","fCat","fAmt"].forEach(function(id){
       $(id).addEventListener("keydown", function(ev){ if(ev.key === "Enter"){ ev.preventDefault(); addEntry(); } });
@@ -1390,7 +1521,7 @@
       ev.target.value = "";
     });
 
-    $("curSel").addEventListener("change", function(){ currency = $("curSel").value; renderAll(); });
+    $("curSel").addEventListener("change", function(){ pushUndo(); currency = $("curSel").value; renderAll(); });
 
     // category manager
     $("addCatBtn").addEventListener("click", function(){
@@ -1424,40 +1555,8 @@
       });
     });
 
-    // seed sample data so charts aren't empty on first open
-    seedSample();
+    // Start blank by default: no sample transactions are loaded.
     renderAll();
-  }
-
-  function seedSample(){
-    var now = new Date();
-    function iso(monthsBack, day){
-      var d = new Date(now.getFullYear(), now.getMonth()-monthsBack, day);
-      var p = function(x){ return String(x).padStart(2,"0"); };
-      return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
-    }
-    var sample = [
-      [2,28,"Salary","Income","income",3200],
-      [2,1,"Rent","Housing","needs",1100],
-      [2,4,"Groceries","Food","needs",340],
-      [2,9,"Dining out","Food","wants",95],
-      [2,15,"Emergency fund","Savings","savings",400],
-      [1,28,"Salary","Income","income",3200],
-      [1,2,"Rent","Housing","needs",1100],
-      [1,6,"Utilities","Bills","needs",180],
-      [1,11,"Concert tickets","Leisure","wants",120],
-      [1,20,"Investments","Savings","savings",450],
-      [0,1,"Salary","Income","income",3200],
-      [0,3,"Rent","Housing","needs",1100],
-      [0,5,"Groceries","Food","needs",310],
-      [0,8,"New headphones","Shopping","wants",160],
-      [0,18,"Emergency fund","Savings","savings",500]
-    ];
-    sample.forEach(function(s){
-      var mag = s[5];
-      var signed = (s[4] === "income") ? mag : -mag;
-      entries.push({ id:uid(), date:iso(s[0],s[1]), description:s[2], category:s[3], type:s[4], amount:signed });
-    });
   }
 
   if(document.readyState === "loading"){ document.addEventListener("DOMContentLoaded", init); }
